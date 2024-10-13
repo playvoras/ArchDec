@@ -1849,7 +1849,8 @@ function decompile(bytecode)
 		elseif op == "NEWCLOSURE" then
 			f("--newclosure")
 		elseif op == "NAMECALL" then
-			f("v" .. b .. ":" .. K .. "()")
+			local method = const(v)
+                        f("v" .. b .. ":" .. method .. "(" .. "v" .. a .. ")")
 		elseif op == "RETURN" then
 			f("return v" .. a)
 		elseif op == "JUMP" then
