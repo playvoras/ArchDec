@@ -1865,6 +1865,9 @@ function decompile(bytecode)
 			f("local v" .. a .. " = " .. "v" .. b  .. " * " .. "v" .. c)
 		elseif op == "DIV" then
 			f("local v" .. a .. " = " .. "v" .. b  .. " / " .. "v" .. c)
+		elseif op == "DUPTABLE" then
+                        local tableconst = constants[d]
+                        f("local v" .. a .. " = " .. tableconst)
 		end
 	end
 	return table.concat(code, "\n")
