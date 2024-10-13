@@ -1850,7 +1850,7 @@ function decompile(bytecode)
 			f("--newclosure")
 		elseif op == "NAMECALL" then
 			local method = const(v)
-                        f("v" .. b .. ":" .. method .. "(" .. "v" .. a .. ")")
+			f("v" .. b .. ":" .. method .. "(" .. "v" .. a .. ")")
 		elseif op == "RETURN" then
 			f("return v" .. a)
 		elseif op == "JUMP" then
@@ -1866,8 +1866,34 @@ function decompile(bytecode)
 		elseif op == "DIV" then
 			f("local v" .. a .. " = " .. "v" .. b  .. " / " .. "v" .. c)
 		elseif op == "DUPTABLE" then
-                        local tableconst = constants[d]
-                        f("local v" .. a .. " = " .. tableconst)
+			local tableconst = constants[d]
+			f("local v" .. a .. " = " .. tableconst)
+		elseif op == "FORGPREP" then
+			local iterator = "v" .. a
+			local state = "v" .. (a + 1)
+			local index = "v" .. (a + 2)
+			f("for " .. index .. ", v" .. (a + 3) .. " in " .. iterator .. "(" .. state .. ", " .. index .. ") do")
+		elseif op == "FORGLOOP" then
+			f("v" .. a .. " = v" .. a .. " + v" .. (a + 1))
+			f("if v" .. a .. " <= v" .. (a + 2) .. " then goto loop" .. i .. " end")
+		elseif op == "DUPCLOSURE" then
+			f("--dupclosure")
+		elseif op == "GETVARARGS" then
+			f("local v" .. a .. " = {...}") 
+		elseif op == "LOADKX" then
+			f("local v" .. a .. " = " .. const(v)) 
+		elseif op == "FASTCALL1" then
+			f("local v" .. a .. " = f" .. b .. "(v" .. c .. ")")
+		elseif op == "FASTCALL2" then
+			f("local v" .. a .. " = f" .. b .. "(v" .. c .. ", v" .. d .. ")")
+		elseif op == "FASTCALL3" then
+			f("local v" .. a .. " = f" .. b .. "(v" .. c .. ", v" .. d .. ", v" .. e .. ")")
+		elseif op == "FASTCALL1K" then
+			f("local v" .. a .. " = f" .. b .. "(" .. const(v) .. ")")
+		elseif op == "FASTCALL2K" then
+			f("local v" .. a .. " = f" .. b .. "(v" .. c .. ", " .. const(v) .. ")")
+		elseif op == "FASTCALL3K" then
+			f("local v" .. a .. " = f" .. b .. "(v" .. c .. ", " .. const(d) .. ", " .. const(v) .. ")")
 		end
 	end
 	return table.concat(code, "\n")
