@@ -1775,12 +1775,28 @@ function decompile(bytecode)
 	bytecode = getscriptbytecode(bytecode)
 	local encoded = base64.encode(bytecode)
 	local deserialized = deserialize(base64.decode(encoded), true)
-	local code = {"--Decompiled with ArchDec V1.5, discord: https://discord.gg/hDWVzBgyA5"}
+	local code = {"-- Decompiled with ArchDec V1.5, discord: https://discord.gg/hDWVzBgyA5"}
 
 	local instructions = deserialized.mainProto.code
 	local constants = deserialized.mainProto.k
 
-	for i, v in pairs(instructions) do
+	local function const(a)
+		if type(constants[a]) == "string" then
+			return '"' .. constants[a] .. '"'
+		elseif type(constants[a]) == "number" then
+			return constants[a]
+		elseif type(constants[a]) == "boolean" then
+			return tostring(constants[a])
+		else
+			return "--unsupported"
+		end
+	end
+
+	local function f(v)
+		table.insert(code, v)
+	end
+
+	for i, v in ipairs(instructions) do
 		local op = v.opname
 		local a = v.A
 		local b = v.B
@@ -1788,100 +1804,77 @@ function decompile(bytecode)
 		local d = v.D
 		local e = v.E
 		local aux = v.aux
-		local K = v.K
-
-		local function const(a)
-			if type(a.K) == "string" then
-				return '"' .. a.K .. '"'
-			elseif type(a.K) == "number" then
-				return a.K
-			elseif type(a.K) == "boolean" then
-				return tostring(a.K)
-			else
-				return "--unsupported"
-			end
-		end
-
-		local function f(v)
-			table.insert(code, v)
-		end
 
 		if op == "LOADNIL" then
 			f("local v" .. a .. " = nil")
 		elseif op == "NOP" then
-			--nop, no operation :)
+			f("-- nop (no operation)")
 		elseif op == "BREAK" then
 			f("break")
 		elseif op == "LOADB" then
-			f("local v" .. a .. " = " .. tostring(toboolean(b)) .. " -- jump offset")
+			f("local v" .. a .. " = " .. tostring(b == 1) .. " -- jump offset")
 		elseif op == "LOADK" then
-			f("local v" .. a .. " = " .. const(v))
+			f("local v" .. a .. " = " .. const(b))
 		elseif op == "NEWTABLE" then
 			f("local v" .. a .. " = {}")
 		elseif op == "MOVE" then
 			f("v" .. a .. " = v" .. b)
 		elseif op == "SETUPVAL" then
-			f("local v_u_" .. b .. " = " .. "v" .. a)
+			f("v_u_" .. b .. " = v" .. a)
 		elseif op == "GETUPVAL" then
 			f("local v" .. a .. " = v_u_" .. b)
 		elseif op == "CLOSEUPVALS" then
-			f("--closeupvals")
+			f("-- closeupvals")
 		elseif op == "GETIMPORT" then
-			f("local v" .. a .. " = " .. constants[d])
+			f("local v" .. a .. " = " .. const(d))
 		elseif op == "CALL" then
-			f("v" .. a .. "(" .. "v" .. b .. ")")
+			f("v" .. a .. "(" .. (b > 0 and "v" .. b or "") .. ")")
 		elseif op == "SETTABLE" then
-			f("v" .. b .. "[" .. "v" .. c .. "] = v" .. a)
+			f("v" .. b .. "[v" .. c .. "] = v" .. a)
 		elseif op == "GETTABLE" then
-			f("local v" .. a .. " = v" .. b .. "[" .. "v" .. c .. "]")
+			f("local v" .. a .. " = v" .. b .. "[v" .. c .. "]")
 		elseif op == "SETTABLEKS" then
-			f("v" .. b .. "[" .. const(v) .. "] = v" .. a)
+			f("v" .. b .. "[" .. const(c) .. "] = v" .. a)
 		elseif op == "GETTABLEKS" then
-			f("local v" .. a .. " = v" .. b .. "[" .. const(v) .. "]")
+			f("local v" .. a .. " = v" .. b .. "[" .. const(c) .. "]")
 		elseif op == "GETGLOBAL" then
-			f("local v" .. a .. " = _G[" .. const(v) .. "]")
+			f("local v" .. a .. " = _G[" .. const(b) .. "]")
 		elseif op == "SETGLOBAL" then
-			f("_G[" .. const(v) .. "] = v" .. a)
+			f("_G[" .. const(b) .. "] = v" .. a)
 		elseif op == "GETTABLEN" then
 			f("local v" .. a .. " = v" .. b .. "[" .. c .. "]")
 		elseif op == "SETTABLEN" then
-			f("v" .. b.. "[" .. c .. "] = v" .. a)
+			f("v" .. b .. "[" .. c .. "] = v" .. a)
 		elseif op == "NEWCLOSURE" then
-			f("--newclosure")
+			f("-- newclosure")
 		elseif op == "NAMECALL" then
-			local method = const(v)
-			f("v" .. b .. ":" .. method .. "(" .. "v" .. a .. ")")
+			f("v" .. b .. ":" .. const(c) .. "(v" .. a .. ")")
 		elseif op == "RETURN" then
 			f("return v" .. a)
 		elseif op == "JUMP" then
-			f("--jump")
+			f("-- jump")
 		elseif op == "JUMPBACK" then
-			f("--jumpback")
+			f("-- jumpback")
 		elseif op == "ADD" then
-			f("local v" .. a .. " = " .. "v" .. b  .. " + " .. "v" .. c)
+			f("local v" .. a .. " = v" .. b .. " + v" .. c)
 		elseif op == "SUB" then
-			f("local v" .. a .. " = " .. "v" .. b  .. " - " .. "v" .. c)
+			f("local v" .. a .. " = v" .. b .. " - v" .. c)
 		elseif op == "MUL" then
-			f("local v" .. a .. " = " .. "v" .. b  .. " * " .. "v" .. c)
+			f("local v" .. a .. " = v" .. b .. " * v" .. c)
 		elseif op == "DIV" then
-			f("local v" .. a .. " = " .. "v" .. b  .. " / " .. "v" .. c)
+			f("local v" .. a .. " = v" .. b .. " / v" .. c)
 		elseif op == "DUPTABLE" then
-			local tableconst = constants[d]
-			f("local v" .. a .. " = " .. tableconst)
+			f("local v" .. a .. " = " .. const(b))
 		elseif op == "FORGPREP" then
-			local iterator = "v" .. a
-			local state = "v" .. (a + 1)
-			local index = "v" .. (a + 2)
-			f("for " .. index .. ", v" .. (a + 3) .. " in " .. iterator .. "(" .. state .. ", " .. index .. ") do")
+			f("for v" .. (a + 2) .. ", v" .. (a + 3) .. " in v" .. a .. "(v" .. (a + 1) .. ", v" .. (a + 2) .. ") do")
 		elseif op == "FORGLOOP" then
-			f("v" .. a .. " = v" .. a .. " + v" .. (a + 1))
-			f("if v" .. a .. " <= v" .. (a + 2) .. " then goto loop" .. i .. " end")
+			f("-- forgloop")
 		elseif op == "DUPCLOSURE" then
-			f("--dupclosure")
+			f("-- dupclosure")
 		elseif op == "GETVARARGS" then
-			f("local v" .. a .. " = {...}") 
+			f("local v" .. a .. " = {...}")
 		elseif op == "LOADKX" then
-			f("local v" .. a .. " = " .. const(v)) 
+			f("local v" .. a .. " = " .. const(aux))
 		elseif op == "FASTCALL1" then
 			f("local v" .. a .. " = f" .. b .. "(v" .. c .. ")")
 		elseif op == "FASTCALL2" then
@@ -1889,13 +1882,16 @@ function decompile(bytecode)
 		elseif op == "FASTCALL3" then
 			f("local v" .. a .. " = f" .. b .. "(v" .. c .. ", v" .. d .. ", v" .. e .. ")")
 		elseif op == "FASTCALL1K" then
-			f("local v" .. a .. " = f" .. b .. "(" .. const(v) .. ")")
+			f("local v" .. a .. " = f" .. b .. "(" .. const(aux) .. ")")
 		elseif op == "FASTCALL2K" then
-			f("local v" .. a .. " = f" .. b .. "(v" .. c .. ", " .. const(v) .. ")")
+			f("local v" .. a .. " = f" .. b .. "(v" .. c .. ", " .. const(aux) .. ")")
 		elseif op == "FASTCALL3K" then
-			f("local v" .. a .. " = f" .. b .. "(v" .. c .. ", " .. const(d) .. ", " .. const(v) .. ")")
+			f("local v" .. a .. " = f" .. b .. "(v" .. c .. ", " .. const(d) .. ", " .. const(aux) .. ")")
+		else
+			f("-- unhandled opcode: " .. op)
 		end
 	end
+
 	return table.concat(code, "\n")
 end
 
