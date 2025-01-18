@@ -1871,7 +1871,7 @@ function decompile(bytecode)
         elseif op == "DUPTABLE" then
             f("local v" .. a .. " = " .. const(b))
         elseif op == "FORGPREP" then
-            f("for v" .. (a + 2) .. ", v" .. (a + 3) .. " in v" .. a .. "(v" .. (a + 1) .. ", v" .. (a + 2) .. ") do")
+            f("for v" .. (a + 3) .. ", v" .. (a + 4) .. " in pairs(v" .. a .. ") do")
         elseif op == "FORGLOOP" then
             f("-- forgloop")
         elseif op == "DUPCLOSURE" then
