@@ -1880,18 +1880,6 @@ function decompile(bytecode)
             f("local v" .. a .. " = {...}")
         elseif op == "LOADKX" then
             f("local v" .. a .. " = " .. const(aux))
-        elseif op == "FASTCALL1" then
-            f("local v" .. a .. " = f" .. b .. "(v" .. c .. ")")
-        elseif op == "FASTCALL2" then
-            f("local v" .. a .. " = f" .. b .. "(v" .. c .. ", v" .. d .. ")")
-        elseif op == "FASTCALL3" then
-            f("local v" .. a .. " = f" .. b .. "(v" .. c .. ", v" .. d .. ", v" .. e .. ")")
-        elseif op == "FASTCALL1K" then
-            f("local v" .. a .. " = f" .. b .. "(" .. const(aux) .. ")")
-        elseif op == "FASTCALL2K" then
-            f("local v" .. a .. " = f" .. b .. "(v" .. c .. ", " .. const(aux) .. ")")
-        elseif op == "FASTCALL3K" then
-            f("local v" .. a .. " = f" .. b .. "(v" .. c .. ", " .. const(d) .. ", " .. const(aux) .. ")")
         else
             if not used_opcodes[op] then
                 missing_opcodes[op] = true
