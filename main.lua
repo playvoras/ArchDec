@@ -1880,22 +1880,7 @@ function decompile(bytecode)
             f("local v" .. a .. " = {...}")
         elseif op == "LOADKX" then
             f("local v" .. a .. " = " .. const(aux))
-        else
-            if not used_opcodes[op] then
-                missing_opcodes[op] = true
-            end
-            f("-- unhandled opcode: " .. op)
         end
-    end
-
-    local header = {"-- Used Opcodes"}
-    for op in pairs(used_opcodes) do
-        table.insert(header, op)
-    end
-
-    table.insert(header, "\n-- Missing Opcodes")
-    for op in pairs(missing_opcodes) do
-        table.insert(header, op)
     end
 
     return table.concat(header, "\n") .. "\n\n" .. table.concat(code, "\n")
