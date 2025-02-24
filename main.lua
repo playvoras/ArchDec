@@ -1876,10 +1876,6 @@ function decompile(bytecode)
             f("-- forgloop")
         elseif op == "DUPCLOSURE" then
             f("-- dupclosure")
-        elseif op == "GETVARARGS" then
-            f("local v" .. a .. " = {...}")
-        elseif op == "LOADKX" then
-            f("local v" .. a .. " = " .. const(aux))
         end
     end
 
